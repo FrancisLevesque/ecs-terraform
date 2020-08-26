@@ -1,9 +1,9 @@
 [
     {
-        "name": "test-http",
-        "image": "alexgaynor/test-http",
+        "name": "echo_server",
+        "image": "flevesqu/echo_server@sha256:14790428460ddbb914e340bd65ca72aca5ab66e5172b4c3c6f2a8471656800cf",
         "cpu": 10,
-        "memory": 512,
+        "memory": 256,
         "links": [],
         "portMappings": [
             {

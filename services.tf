@@ -1,43 +1,70 @@
-resource "aws_elb" "test-http" {
-    name = "test-http-elb"
-    security_groups = ["${aws_security_group.load_balancers.id}"]
-    subnets = ["${aws_subnet.main.id}"]
+resource "aws_lb" "alb" {
+  name               = "portal-deploy-test-alb"
+  internal           = false
+  load_balancer_type = "application"
+  security_groups    = [aws_security_group.load_balancers.id]
+  subnets            = [aws_subnet.main.id, aws_subnet.alt.id]
 
-    listener {
-        lb_protocol = "http"
-        lb_port = 80
-
-        instance_protocol = "http"
-        instance_port = 8080
-    }
-
-    health_check {
-        healthy_threshold = 3
-        unhealthy_threshold = 2
-        timeout = 3
-        target = "HTTP:8080/hello-world"
-        interval = 5
-    }
-
-    cross_zone_load_balancing = true
+  tags = {
+    Environment = "portal_deploy_test"
+  }
 }
 
-resource "aws_ecs_task_definition" "test-http" {
-    family = "test-http"
-    container_definitions = "${file("task-definitions/test-http.json")}"
+resource "aws_lb_target_group" "echo_server" {
+  name     = "echo-server-target-group"
+  port     = 8080
+  protocol = "HTTP"
+  vpc_id   = aws_vpc.main.id
 }
 
-resource "aws_ecs_service" "test-http" {
-    name = "test-http"
-    cluster = "${aws_ecs_cluster.main.id}"
-    task_definition = "${aws_ecs_task_definition.test-http.arn}"
-    iam_role = "${aws_iam_role.ecs_service_role.arn}"
-    desired_count = 2
-    depends_on = ["aws_iam_role_policy.ecs_service_role_policy"]
+resource "aws_lb_listener" "listener" {
+  load_balancer_arn = aws_lb.alb.arn
+  port              = "80"
+  protocol          = "HTTP"
 
-    load_balancer {
-        elb_name = "${aws_elb.test-http.id}"
-        container_name = "test-http"
-        container_port = 8080
+  default_action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.echo_server.arn
+  }
+}
+
+resource "aws_lb_listener_rule" "routing" {
+  listener_arn = aws_lb_listener.listener.arn
+
+  action {
+    type             = "forward"
+    target_group_arn = aws_lb_target_group.echo_server.arn
+  }
+
+  condition {
+    path_pattern {
+      values = ["*"]
     }
+  }
+}
+
+# resource "aws_autoscaling_attachment" "alb_attachment" {
+#   autoscaling_group_name = aws_autoscaling_group.ecs-cluster.id
+#   alb_target_group_arn   = aws_lb_target_group.echo_server.arn
+# }
+
+
+resource "aws_ecs_task_definition" "echo_server" {
+  family                = "echo_server"
+  container_definitions = file("task-definitions/echo_server.json")
+}
+
+resource "aws_ecs_service" "echo_server" {
+  name            = "echo_server"
+  cluster         = aws_ecs_cluster.main.id
+  task_definition = aws_ecs_task_definition.echo_server.arn
+  iam_role        = aws_iam_role.ecs_service_role.arn
+  desired_count   = 2
+  depends_on      = [aws_iam_role_policy.ecs_service_role_policy]
+
+  load_balancer {
+    target_group_arn = aws_lb_target_group.echo_server.arn
+    container_name   = "echo_server"
+    container_port   = 8080
+  }
 }
