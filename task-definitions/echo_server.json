@@ -1,7 +1,7 @@
 [
     {
         "name": "echo_server",
-        "image": "flevesqu/echo_server@sha256:326c774f559729bffc3a3f0c5c0e8b78f19af893bf23b79c5a23ffd68000f6b5",
+        "image": "flevesqu/echo_server:green@sha256:6dcf5088138b86a4fdaacb270e1de133a8117dc40e511d8f903287922549376b",
         "cpu": 10,
         "memory": 256,
         "links": [],
@@ -17,7 +17,7 @@
         "command": [],
         "environment": [{
             "name": "IDENTIFIER",
-            "value": "- background is red"
+            "value": "- background is green"
         }],
         "mountPoints": [],
         "volumesFrom": []
