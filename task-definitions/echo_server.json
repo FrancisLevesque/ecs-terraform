@@ -1,21 +1,24 @@
 [
     {
         "name": "echo_server",
-        "image": "flevesqu/echo_server@sha256:14790428460ddbb914e340bd65ca72aca5ab66e5172b4c3c6f2a8471656800cf",
+        "image": "flevesqu/echo_server@sha256:326c774f559729bffc3a3f0c5c0e8b78f19af893bf23b79c5a23ffd68000f6b5",
         "cpu": 10,
         "memory": 256,
         "links": [],
         "portMappings": [
             {
                 "containerPort": 8080,
-                "hostPort": 8080,
+                "hostPort": 0,
                 "protocol": "tcp"
             }
         ],
         "essential": true,
         "entryPoint": [],
         "command": [],
-        "environment": [],
+        "environment": [{
+            "name": "IDENTIFIER",
+            "value": "- background is red"
+        }],
         "mountPoints": [],
         "volumesFrom": []
     }

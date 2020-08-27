@@ -10,13 +10,6 @@ resource "aws_lb" "alb" {
   }
 }
 
-resource "aws_lb_target_group" "echo_server" {
-  name     = "echo-server-target-group"
-  port     = 8080
-  protocol = "HTTP"
-  vpc_id   = aws_vpc.main.id
-}
-
 resource "aws_lb_listener" "listener" {
   load_balancer_arn = aws_lb.alb.arn
   port              = "80"
@@ -28,25 +21,27 @@ resource "aws_lb_listener" "listener" {
   }
 }
 
-resource "aws_lb_listener_rule" "routing" {
-  listener_arn = aws_lb_listener.listener.arn
-
-  action {
-    type             = "forward"
-    target_group_arn = aws_lb_target_group.echo_server.arn
-  }
-
-  condition {
-    path_pattern {
-      values = ["*"]
-    }
+resource "aws_lb_target_group" "echo_server" {
+  name        = "echo-server-target-group"
+  port        = 8080
+  protocol    = "HTTP"
+  vpc_id      = aws_vpc.main.id
+  target_type = "instance"
+  health_check {
+    healthy_threshold   = "3"
+    interval            = "30"
+    protocol            = "HTTP"
+    matcher             = "200"
+    timeout             = "3"
+    path                = "/"
+    unhealthy_threshold = "2"
   }
 }
 
-# resource "aws_autoscaling_attachment" "alb_attachment" {
-#   autoscaling_group_name = aws_autoscaling_group.ecs-cluster.id
-#   alb_target_group_arn   = aws_lb_target_group.echo_server.arn
-# }
+output "app_alb_dns" {
+  description = "DNS for load balancer"
+  value       = aws_lb.alb.dns_name
+}
 
 
 resource "aws_ecs_task_definition" "echo_server" {
